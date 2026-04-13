@@ -6,7 +6,22 @@ import svcs
 from svcs.fastapi import DepContainer
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I, Settings
+from wireup_benchmarks.services import (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    PluginAlpha,
+    PluginBlue,
+    PluginGreen,
+    PluginRed,
+    Settings,
+)
 
 router = fastapi.APIRouter()
 
@@ -34,6 +49,12 @@ registry.register_value(A, a_instance)
 # B depends on A
 b_instance = services.B(a_instance)
 registry.register_value(B, b_instance)
+
+# Plugin singletons
+registry.register_value(PluginRed, PluginRed())
+registry.register_value(PluginGreen, PluginGreen())
+registry.register_value(PluginBlue, PluginBlue())
+registry.register_value(PluginAlpha, PluginAlpha())
 
 # Scoped Services (per request)
 # In Svcs, "scoped" is managed by the request lifecycle.
@@ -167,4 +188,30 @@ async def svcs_scoped(container: DepContainer) -> Dict[str, str]:
     assert isinstance(h, H)
     assert isinstance(i, I)
     assert d is dd
+    return {}
+
+
+@router.get("/svcs/collection_set")
+async def svcs_collection_set(container: DepContainer) -> Dict[str, str]:
+    services.record_request("collection_set")
+    plugins = {
+        container.get(PluginRed),
+        container.get(PluginGreen),
+        container.get(PluginBlue),
+        container.get(PluginAlpha),
+    }
+    assert len(plugins) == 4
+    return {}
+
+
+@router.get("/svcs/collection_map")
+async def svcs_collection_map(container: DepContainer) -> Dict[str, str]:
+    services.record_request("collection_map")
+    plugins = {
+        "red": container.get(PluginRed),
+        "green": container.get(PluginGreen),
+        "blue": container.get(PluginBlue),
+        "alpha": container.get(PluginAlpha),
+    }
+    assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
     return {}
