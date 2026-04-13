@@ -59,7 +59,22 @@ PROJECTS = {
     "diwire": "diwire",
     "lagom": "Lagom †",
 }
-TESTS = ["singleton", "scoped"]
+TESTS = ["singleton", "scoped", "collection_set", "collection_map"]
+# Per-project opt-out from specific tests. Populated incrementally during
+# framework-by-framework implementation; entries are removed as each framework
+# gains collection_set + collection_map routes. The final state should be empty.
+PROJECT_TESTS: Dict[str, List[str]] = {
+    "globals": ["singleton", "scoped"],
+    "fastapi": ["singleton", "scoped"],
+    "dependency_injector": ["singleton", "scoped"],
+    "injector": ["singleton", "scoped"],
+    "diwire": ["singleton", "scoped"],
+    "dishka": ["singleton", "scoped"],
+    "aioinject": ["singleton", "scoped"],
+    "svcs": ["singleton", "scoped"],
+    "that_depends": ["singleton", "scoped"],
+    "lagom": ["singleton", "scoped"],
+}
 CONCURRENCY = 50
 LOADGEN_CPU = 1
 SERVER_CPU = 2
@@ -496,7 +511,7 @@ def main() -> None:
     parser.add_argument("--bench-assert", action="store_true", help="Enable workload assertion counters")
     args = parser.parse_args()
 
-    pairs = [(project_id, test_name) for project_id in PROJECTS for test_name in TESTS]
+    pairs = [(project_id, test_name) for project_id in PROJECTS for test_name in PROJECT_TESTS.get(project_id, TESTS)]
     run_queue = [(project_id, test_name) for _ in range(args.iterations) for project_id, test_name in pairs]
     total_target_runs = len(run_queue)
     completed_runs = 0
@@ -570,6 +585,8 @@ def main() -> None:
         combined = all_results + list(in_progress.values())
         singleton_results = [r for r in combined if r["test"] == "singleton"]
         scoped_results = [r for r in combined if r["test"] == "scoped"]
+        collection_set_results = [r for r in combined if r["test"] == "collection_set"]
+        collection_map_results = [r for r in combined if r["test"] == "collection_map"]
 
         elapsed = time.perf_counter() - benchmark_start
         pct = (completed_runs / total_target_runs) if total_target_runs else 0.0
@@ -585,10 +602,16 @@ def main() -> None:
         parts.append(Panel(progress, title="Progress", expand=False))
         singleton_table = build_table("Benchmark Results - Singleton (So Far)", singleton_results)
         scoped_table = build_table("Benchmark Results - Scoped (So Far)", scoped_results)
+        collection_set_table = build_table("Benchmark Results - Collection Set (So Far)", collection_set_results)
+        collection_map_table = build_table("Benchmark Results - Collection Map (So Far)", collection_map_results)
         if singleton_table:
             parts.append(singleton_table)
         if scoped_table:
             parts.append(scoped_table)
+        if collection_set_table:
+            parts.append(collection_set_table)
+        if collection_map_table:
+            parts.append(collection_map_table)
         if current_iteration_line:
             title = "Latest Iteration"
             if current_iteration_progress:
@@ -706,14 +729,24 @@ def main() -> None:
 
     singleton_results = [r for r in all_results if r["test"] == "singleton"]
     scoped_results = [r for r in all_results if r["test"] == "scoped"]
+    collection_set_results = [r for r in all_results if r["test"] == "collection_set"]
+    collection_map_results = [r for r in all_results if r["test"] == "collection_map"]
 
     final_singleton = build_table("Benchmark Results - Singleton", singleton_results)
     final_scoped = build_table("Benchmark Results - Scoped", scoped_results)
+    final_collection_set = build_table("Benchmark Results - Collection Set", collection_set_results)
+    final_collection_map = build_table("Benchmark Results - Collection Map", collection_map_results)
     if final_singleton:
         console.print(final_singleton)
         console.print()
     if final_scoped:
         console.print(final_scoped)
+        console.print()
+    if final_collection_set:
+        console.print(final_collection_set)
+        console.print()
+    if final_collection_map:
+        console.print(final_collection_map)
 
 
 if __name__ == "__main__":
