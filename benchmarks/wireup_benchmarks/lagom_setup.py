@@ -5,7 +5,22 @@ from lagom import Container, Singleton, context_dependency_definition
 from lagom.integrations.fast_api import FastApiIntegration
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I, Settings
+from wireup_benchmarks.services import (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    PluginAlpha,
+    PluginBlue,
+    PluginGreen,
+    PluginRed,
+    Settings,
+)
 
 container = Container()
 
@@ -20,6 +35,12 @@ container[D] = D
 container[E] = E
 container[F] = F
 container[G] = G
+
+# Plugin singletons for collection_set / collection_map
+container[PluginRed] = Singleton(PluginRed)
+container[PluginGreen] = Singleton(PluginGreen)
+container[PluginBlue] = Singleton(PluginBlue)
+container[PluginAlpha] = Singleton(PluginAlpha)
 
 
 # For generator-based services (H), use context_dependency_definition
@@ -76,4 +97,30 @@ async def lagom_scoped(
     assert isinstance(h, H)
     assert isinstance(i, I)
     assert d is dd
+    return {}
+
+
+@router.get("/lagom/collection_set")
+async def lagom_collection_set(
+    red=deps.depends(PluginRed),
+    green=deps.depends(PluginGreen),
+    blue=deps.depends(PluginBlue),
+    alpha=deps.depends(PluginAlpha),
+) -> Dict[str, str]:
+    services.record_request("collection_set")
+    plugins = {red, green, blue, alpha}
+    assert len(plugins) == 4
+    return {}
+
+
+@router.get("/lagom/collection_map")
+async def lagom_collection_map(
+    red=deps.depends(PluginRed),
+    green=deps.depends(PluginGreen),
+    blue=deps.depends(PluginBlue),
+    alpha=deps.depends(PluginAlpha),
+) -> Dict[str, str]:
+    services.record_request("collection_map")
+    plugins = {"red": red, "green": green, "blue": blue, "alpha": alpha}
+    assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
     return {}

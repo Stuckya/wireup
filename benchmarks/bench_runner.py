@@ -60,12 +60,10 @@ PROJECTS = {
     "lagom": "Lagom †",
 }
 TESTS = ["singleton", "scoped", "collection_set", "collection_map"]
-# Per-project opt-out from specific tests. Populated incrementally during
-# framework-by-framework implementation; entries are removed as each framework
-# gains collection_set + collection_map routes. The final state should be empty.
-PROJECT_TESTS: Dict[str, List[str]] = {
-    "lagom": ["singleton", "scoped"],
-}
+# Per-project opt-out from specific tests. Empty by default — every project
+# participates in every test. Populate only when a framework genuinely cannot
+# implement a test idiomatically.
+PROJECT_TESTS: Dict[str, List[str]] = {}
 CONCURRENCY = 50
 LOADGEN_CPU = 1
 SERVER_CPU = 2
