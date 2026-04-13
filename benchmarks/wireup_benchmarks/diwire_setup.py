@@ -1,10 +1,27 @@
 from typing import Dict
 
 import fastapi
-from diwire import Container, Injected, Lifetime, Scope, resolver_context
+from diwire import All, Component, Container, Injected, Lifetime, Scope, resolver_context
+from typing_extensions import Annotated
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I, Settings
+from wireup_benchmarks.services import (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    Plugin,
+    PluginAlpha,
+    PluginBlue,
+    PluginGreen,
+    PluginRed,
+    Settings,
+)
 
 container = Container()
 
@@ -17,6 +34,12 @@ for service_type in (C, D, E, F, G):
 
 container.add_generator(services.make_h, provides=H, scope=Scope.REQUEST, lifetime=Lifetime.SCOPED)
 container.add_generator(services.make_i, provides=I, scope=Scope.REQUEST, lifetime=Lifetime.SCOPED)
+
+container.add(PluginRed, provides=Plugin, component="red", scope=Scope.APP, lifetime=Lifetime.SCOPED)
+container.add(PluginGreen, provides=Plugin, component="green", scope=Scope.APP, lifetime=Lifetime.SCOPED)
+container.add(PluginBlue, provides=Plugin, component="blue", scope=Scope.APP, lifetime=Lifetime.SCOPED)
+container.add(PluginAlpha, provides=Plugin, component="alpha", scope=Scope.APP, lifetime=Lifetime.SCOPED)
+
 resolver_context.set_fallback_container(container)
 
 router = fastapi.APIRouter()
@@ -58,4 +81,26 @@ async def diwire_scoped(
     assert isinstance(h, H)
     assert isinstance(i, I)
     assert d is dd
+    return {}
+
+
+@router.get("/diwire/collection_set")
+@resolver_context.inject(scope=Scope.REQUEST)
+async def diwire_collection_set(plugins: Injected[All[Plugin]]) -> Dict[str, str]:
+    services.record_request("collection_set")
+    assert len(plugins) == 4
+    return {}
+
+
+@router.get("/diwire/collection_map")
+@resolver_context.inject(scope=Scope.REQUEST)
+async def diwire_collection_map(
+    red: Injected[Annotated[Plugin, Component("red")]],
+    green: Injected[Annotated[Plugin, Component("green")]],
+    blue: Injected[Annotated[Plugin, Component("blue")]],
+    alpha: Injected[Annotated[Plugin, Component("alpha")]],
+) -> Dict[str, str]:
+    services.record_request("collection_map")
+    plugins = {"red": red, "green": green, "blue": blue, "alpha": alpha}
+    assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
     return {}
