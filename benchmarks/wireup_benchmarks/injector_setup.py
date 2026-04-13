@@ -1,4 +1,4 @@
-from typing import Dict, List, Mapping
+from typing import Dict, List
 
 import fastapi
 from fastapi_injector import (
@@ -90,12 +90,12 @@ class BenchmarkModule(Module):
     def configure(self, binder: Binder) -> None:
         binder.multibind(List[Plugin], to=[PluginRed, PluginGreen, PluginBlue, PluginAlpha])
         binder.multibind(
-            Mapping[str, Plugin],
+            Dict[str, Plugin],
             to={
-                "red": PluginRed,
-                "green": PluginGreen,
-                "blue": PluginBlue,
-                "alpha": PluginAlpha,
+                "red": PluginRed(),
+                "green": PluginGreen(),
+                "blue": PluginBlue(),
+                "alpha": PluginAlpha(),
             },
         )
 
@@ -162,7 +162,7 @@ async def injector_collection_set(
 
 @router.get("/injector/collection_map")
 async def injector_collection_map(
-    plugins: Mapping[str, Plugin] = Injected(Mapping[str, Plugin]),
+    plugins: Dict[str, Plugin] = Injected(Dict[str, Plugin]),
 ) -> Dict[str, str]:
     services.record_request("collection_map")
     assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
