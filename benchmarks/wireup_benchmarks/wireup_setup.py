@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from typing import Dict, Mapping, Set
 
 import fastapi
@@ -7,37 +6,27 @@ from wireup import Injected
 from wireup.integration.fastapi import WireupRoute
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I
+from wireup_benchmarks.services import (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    Plugin,
+    PluginAlpha,
+    PluginBlue,
+    PluginGreen,
+    PluginRed,
+)
 
-
-class Plugin(ABC):
-    @abstractmethod
-    def label(self) -> str: ...
-
-
-@wireup.injectable(as_type=Plugin, qualifier="red")
-class PluginRed(Plugin):
-    def label(self) -> str:
-        return "red"
-
-
-@wireup.injectable(as_type=Plugin, qualifier="green")
-class PluginGreen(Plugin):
-    def label(self) -> str:
-        return "green"
-
-
-@wireup.injectable(as_type=Plugin, qualifier="blue")
-class PluginBlue(Plugin):
-    def label(self) -> str:
-        return "blue"
-
-
-@wireup.injectable(as_type=Plugin, qualifier="alpha")
-class PluginAlpha(Plugin):
-    def label(self) -> str:
-        return "alpha"
-
+wireup.injectable(as_type=Plugin, qualifier="red")(PluginRed)
+wireup.injectable(as_type=Plugin, qualifier="green")(PluginGreen)
+wireup.injectable(as_type=Plugin, qualifier="blue")(PluginBlue)
+wireup.injectable(as_type=Plugin, qualifier="alpha")(PluginAlpha)
 
 router = fastapi.APIRouter(route_class=WireupRoute)
 container = wireup.create_async_container(
