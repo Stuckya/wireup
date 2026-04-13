@@ -243,6 +243,8 @@ class Plugin(ABC):
 
 
 class PluginRed(Plugin):
+    """Plugin implementation keyed as "red"."""
+
     def __init__(self) -> None:
         record_created("PluginRed")
 
@@ -251,6 +253,8 @@ class PluginRed(Plugin):
 
 
 class PluginGreen(Plugin):
+    """Plugin implementation keyed as "green"."""
+
     def __init__(self) -> None:
         record_created("PluginGreen")
 
@@ -259,6 +263,8 @@ class PluginGreen(Plugin):
 
 
 class PluginBlue(Plugin):
+    """Plugin implementation keyed as "blue"."""
+
     def __init__(self) -> None:
         record_created("PluginBlue")
 
@@ -267,6 +273,8 @@ class PluginBlue(Plugin):
 
 
 class PluginAlpha(Plugin):
+    """Plugin implementation keyed as "alpha"."""
+
     def __init__(self) -> None:
         record_created("PluginAlpha")
 
