@@ -1,11 +1,29 @@
 from functools import lru_cache
-from typing import AsyncIterator, Dict, Iterator
+from typing import AsyncIterator, Dict, Iterator, Mapping, Set
 
 import fastapi
 from typing_extensions import Annotated
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I, Settings, make_h, make_i
+from wireup_benchmarks.services import (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    Plugin,
+    PluginAlpha,
+    PluginBlue,
+    PluginGreen,
+    PluginRed,
+    Settings,
+    make_h,
+    make_i,
+)
 
 
 # This is the recommended way to do this in the docs but outright kills performance.
@@ -68,6 +86,21 @@ async def get_i(e: Annotated[E, fastapi.Depends(get_e)], f: Annotated[F, fastapi
         yield i
 
 
+@lru_cache
+def get_plugins_set() -> Set[Plugin]:
+    return {PluginRed(), PluginGreen(), PluginBlue(), PluginAlpha()}
+
+
+@lru_cache
+def get_plugins_map() -> Mapping[str, Plugin]:
+    return {
+        "red": PluginRed(),
+        "green": PluginGreen(),
+        "blue": PluginBlue(),
+        "alpha": PluginAlpha(),
+    }
+
+
 router = fastapi.APIRouter()
 
 
@@ -107,4 +140,22 @@ async def fastapi_scoped(
     assert isinstance(h, H)
     assert isinstance(i, I)
     assert d is dd
+    return {}
+
+
+@router.get("/fastapi/collection_set")
+async def fastapi_collection_set(
+    plugins: Annotated[Set[Plugin], fastapi.Depends(get_plugins_set)],
+) -> Dict[str, str]:
+    services.record_request("collection_set")
+    assert len(plugins) == 4
+    return {}
+
+
+@router.get("/fastapi/collection_map")
+async def fastapi_collection_map(
+    plugins: Annotated[Mapping[str, Plugin], fastapi.Depends(get_plugins_map)],
+) -> Dict[str, str]:
+    services.record_request("collection_map")
+    assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
     return {}

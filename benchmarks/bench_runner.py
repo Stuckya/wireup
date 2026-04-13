@@ -64,7 +64,6 @@ TESTS = ["singleton", "scoped", "collection_set", "collection_map"]
 # framework-by-framework implementation; entries are removed as each framework
 # gains collection_set + collection_map routes. The final state should be empty.
 PROJECT_TESTS: Dict[str, List[str]] = {
-    "fastapi": ["singleton", "scoped"],
     "dependency_injector": ["singleton", "scoped"],
     "injector": ["singleton", "scoped"],
     "diwire": ["singleton", "scoped"],
