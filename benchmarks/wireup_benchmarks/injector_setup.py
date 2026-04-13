@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Mapping
 
 import fastapi
 from fastapi_injector import (
@@ -8,10 +8,26 @@ from fastapi_injector import (
     attach_injector,
     request_scope,
 )
-from injector import Injector, Module, provider, singleton
+from injector import Binder, Injector, Module, provider, singleton
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I, Settings
+from wireup_benchmarks.services import (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    Plugin,
+    PluginAlpha,
+    PluginBlue,
+    PluginGreen,
+    PluginRed,
+    Settings,
+)
 
 
 class BenchmarkModule(Module):
@@ -71,6 +87,18 @@ class BenchmarkModule(Module):
     def provide_i(self, e: E, f: F) -> I:
         return I(e, f)
 
+    def configure(self, binder: Binder) -> None:
+        binder.multibind(List[Plugin], to=[PluginRed, PluginGreen, PluginBlue, PluginAlpha])
+        binder.multibind(
+            Mapping[str, Plugin],
+            to={
+                "red": PluginRed,
+                "green": PluginGreen,
+                "blue": PluginBlue,
+                "alpha": PluginAlpha,
+            },
+        )
+
 
 injector = Injector([BenchmarkModule()])
 router = fastapi.APIRouter()
@@ -120,4 +148,22 @@ async def injector_scoped(
     assert isinstance(h, H)
     assert isinstance(i, I)
     assert d is dd
+    return {}
+
+
+@router.get("/injector/collection_set")
+async def injector_collection_set(
+    plugins: List[Plugin] = Injected(List[Plugin]),
+) -> Dict[str, str]:
+    services.record_request("collection_set")
+    assert len(plugins) == 4
+    return {}
+
+
+@router.get("/injector/collection_map")
+async def injector_collection_map(
+    plugins: Mapping[str, Plugin] = Injected(Mapping[str, Plugin]),
+) -> Dict[str, str]:
+    services.record_request("collection_map")
+    assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
     return {}
