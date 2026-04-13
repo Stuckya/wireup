@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List, Mapping
 
 import fastapi
 from dependency_injector import containers, providers
@@ -7,6 +7,7 @@ from fastapi import Depends
 from typing_extensions import Annotated
 
 from wireup_benchmarks import services
+from wireup_benchmarks.services import Plugin, PluginAlpha, PluginBlue, PluginGreen, PluginRed
 
 
 class Container(containers.DeclarativeContainer):
@@ -24,6 +25,18 @@ class Container(containers.DeclarativeContainer):
     # Context-local singletons to match per-request scoping without resource lifecycle.
     h = providers.ContextLocalSingleton(services.H, c=c, d=d)
     i = providers.ContextLocalSingleton(services.I, e=e, f=f)
+
+    plugin_red = providers.Singleton(PluginRed)
+    plugin_green = providers.Singleton(PluginGreen)
+    plugin_blue = providers.Singleton(PluginBlue)
+    plugin_alpha = providers.Singleton(PluginAlpha)
+    plugins_list = providers.List(plugin_red, plugin_green, plugin_blue, plugin_alpha)
+    plugins_map = providers.Dict(
+        red=plugin_red,
+        green=plugin_green,
+        blue=plugin_blue,
+        alpha=plugin_alpha,
+    )
 
 
 router = fastapi.APIRouter()
@@ -70,6 +83,26 @@ async def dependency_injector_scoped(
     assert isinstance(h, services.H)
     assert isinstance(i, services.I)
 
+    return {}
+
+
+@router.get("/dependency_injector/collection_set")
+@inject
+async def dependency_injector_collection_set(
+    plugins: Annotated[List[Plugin], Depends(Provide[Container.plugins_list])],
+) -> Dict[str, Any]:
+    services.record_request("collection_set")
+    assert len(plugins) == 4
+    return {}
+
+
+@router.get("/dependency_injector/collection_map")
+@inject
+async def dependency_injector_collection_map(
+    plugins: Annotated[Mapping[str, Plugin], Depends(Provide[Container.plugins_map])],
+) -> Dict[str, Any]:
+    services.record_request("collection_map")
+    assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
     return {}
 
 
