@@ -5,6 +5,7 @@ from that_depends import BaseContainer, providers
 from that_depends.providers.context_resources import ContextScopes
 
 from wireup_benchmarks import services
+from wireup_benchmarks.services import PluginAlpha, PluginBlue, PluginGreen, PluginRed
 
 
 def _c_resource():
@@ -45,6 +46,11 @@ class Container(BaseContainer):
 
     h = providers.ContextResource(services.make_h, c=c, d=d).with_config(scope=ContextScopes.REQUEST, strict_scope=True)
     i = providers.ContextResource(services.make_i, e=e, f=f).with_config(scope=ContextScopes.REQUEST, strict_scope=True)
+
+    plugin_red = providers.Singleton(PluginRed)
+    plugin_green = providers.Singleton(PluginGreen)
+    plugin_blue = providers.Singleton(PluginBlue)
+    plugin_alpha = providers.Singleton(PluginAlpha)
 
 
 router = APIRouter(prefix="/that_depends", tags=["that-depends"])
@@ -87,4 +93,30 @@ async def get_scoped(
     assert isinstance(h, services.H)
     assert isinstance(i, services.I)
     assert d is dd
+    return {}
+
+
+@router.get("/collection_set")
+async def get_collection_set(
+    red: Annotated[PluginRed, Depends(Container.plugin_red)],
+    green: Annotated[PluginGreen, Depends(Container.plugin_green)],
+    blue: Annotated[PluginBlue, Depends(Container.plugin_blue)],
+    alpha: Annotated[PluginAlpha, Depends(Container.plugin_alpha)],
+):
+    services.record_request("collection_set")
+    plugins = {red, green, blue, alpha}
+    assert len(plugins) == 4
+    return {}
+
+
+@router.get("/collection_map")
+async def get_collection_map(
+    red: Annotated[PluginRed, Depends(Container.plugin_red)],
+    green: Annotated[PluginGreen, Depends(Container.plugin_green)],
+    blue: Annotated[PluginBlue, Depends(Container.plugin_blue)],
+    alpha: Annotated[PluginAlpha, Depends(Container.plugin_alpha)],
+):
+    services.record_request("collection_map")
+    plugins = {"red": red, "green": green, "blue": blue, "alpha": alpha}
+    assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
     return {}
