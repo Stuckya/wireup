@@ -7,7 +7,25 @@ from aioinject import Injected
 from aioinject.ext.fastapi import FastAPIExtension, inject
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I, Settings, make_a, make_h, make_i
+from wireup_benchmarks.services import (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    PluginAlpha,
+    PluginBlue,
+    PluginGreen,
+    PluginRed,
+    Settings,
+    make_a,
+    make_h,
+    make_i,
+)
 
 container = aioinject.Container(extensions=[FastAPIExtension()])
 container.register(
@@ -21,6 +39,10 @@ container.register(
     aioinject.Scoped(G),
     aioinject.Scoped(contextlib.contextmanager(make_h), H),
     aioinject.Scoped(contextlib.asynccontextmanager(make_i), I),
+    aioinject.Singleton(PluginRed),
+    aioinject.Singleton(PluginGreen),
+    aioinject.Singleton(PluginBlue),
+    aioinject.Singleton(PluginAlpha),
 )
 
 router = fastapi.APIRouter()
@@ -62,4 +84,32 @@ async def wireup_scoped(
     assert isinstance(h, H)
     assert isinstance(i, I)
     assert d is dd
+    return {}
+
+
+@router.get("/aioinject/collection_set")
+@inject
+async def aioinject_collection_set(
+    red: Injected[PluginRed],
+    green: Injected[PluginGreen],
+    blue: Injected[PluginBlue],
+    alpha: Injected[PluginAlpha],
+) -> Dict[str, str]:
+    services.record_request("collection_set")
+    plugins = {red, green, blue, alpha}
+    assert len(plugins) == 4
+    return {}
+
+
+@router.get("/aioinject/collection_map")
+@inject
+async def aioinject_collection_map(
+    red: Injected[PluginRed],
+    green: Injected[PluginGreen],
+    blue: Injected[PluginBlue],
+    alpha: Injected[PluginAlpha],
+) -> Dict[str, str]:
+    services.record_request("collection_map")
+    plugins = {"red": red, "green": green, "blue": blue, "alpha": alpha}
+    assert set(plugins.keys()) == {"red", "green", "blue", "alpha"}
     return {}
