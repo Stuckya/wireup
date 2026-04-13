@@ -4,12 +4,38 @@ from typing import Dict
 import fastapi
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I
+from wireup_benchmarks.services import (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    Plugin,
+    PluginAlpha,
+    PluginBlue,
+    PluginGreen,
+    PluginRed,
+)
 
 settings = services.Settings()
 a = services.A(start=settings.start)
 b = services.B(a=a)
 
+_plugin_red = PluginRed()
+_plugin_green = PluginGreen()
+_plugin_blue = PluginBlue()
+_plugin_alpha = PluginAlpha()
+plugins_set: set[Plugin] = {_plugin_red, _plugin_green, _plugin_blue, _plugin_alpha}
+plugins_map: dict[str, Plugin] = {
+    "red": _plugin_red,
+    "green": _plugin_green,
+    "blue": _plugin_blue,
+    "alpha": _plugin_alpha,
+}
 
 router = fastapi.APIRouter()
 
@@ -43,4 +69,18 @@ async def globals_scoped() -> Dict[str, str]:
     assert isinstance(g, G)
     assert isinstance(h, H)
     assert isinstance(i, I)
+    return {}
+
+
+@router.get("/globals/collection_set")
+async def globals_collection_set() -> Dict[str, str]:
+    services.record_request("collection_set")
+    assert len(plugins_set) == 4
+    return {}
+
+
+@router.get("/globals/collection_map")
+async def globals_collection_map() -> Dict[str, str]:
+    services.record_request("collection_map")
+    assert set(plugins_map.keys()) == {"red", "green", "blue", "alpha"}
     return {}
