@@ -44,12 +44,22 @@ elif project == "wireup_cbr":
     import wireup.integration.fastapi
 
     from wireup_benchmarks import wireup_setup
-    from wireup_benchmarks.wireup_cbr_setup import WireupScopedBenchController, WireupSingletonBenchController
+    from wireup_benchmarks.wireup_cbr_setup import (
+        WireupCollectionMapBenchController,
+        WireupCollectionSetBenchController,
+        WireupScopedBenchController,
+        WireupSingletonBenchController,
+    )
 
     wireup.integration.fastapi.setup(
         wireup_setup.container,
         app,
-        class_based_handlers=[WireupSingletonBenchController, WireupScopedBenchController],
+        class_based_handlers=[
+            WireupSingletonBenchController,
+            WireupScopedBenchController,
+            WireupCollectionSetBenchController,
+            WireupCollectionMapBenchController,
+        ],
     )
 elif project == "globals":
     from wireup_benchmarks import globals_setup

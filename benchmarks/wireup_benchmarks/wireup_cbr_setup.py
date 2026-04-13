@@ -1,11 +1,11 @@
-from typing import Dict
+from typing import Dict, Mapping, Set
 
 import fastapi
 from wireup import Injected
 from wireup.integration.fastapi import WireupRoute
 
 from wireup_benchmarks import services
-from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I
+from wireup_benchmarks.services import A, B, C, D, E, F, G, H, I, Plugin
 
 
 class WireupSingletonBenchController:
@@ -54,4 +54,32 @@ class WireupScopedBenchController:
         assert isinstance(h, H)
         assert isinstance(i, I)
         assert d is dd
+        return {}
+
+
+class WireupCollectionSetBenchController:
+    __slots__ = ("plugins",)
+    router = fastapi.APIRouter(prefix="/wireup_cbr", route_class=WireupRoute)
+
+    def __init__(self, plugins: Injected[Set[Plugin]]) -> None:
+        self.plugins = plugins
+
+    @router.get("/collection_set")
+    async def wireup_collection_set(self) -> Dict[str, str]:
+        services.record_request("collection_set")
+        assert len(self.plugins) == 4
+        return {}
+
+
+class WireupCollectionMapBenchController:
+    __slots__ = ("plugins",)
+    router = fastapi.APIRouter(prefix="/wireup_cbr", route_class=WireupRoute)
+
+    def __init__(self, plugins: Injected[Mapping[str, Plugin]]) -> None:
+        self.plugins = plugins
+
+    @router.get("/collection_map")
+    async def wireup_collection_map(self) -> Dict[str, str]:
+        services.record_request("collection_map")
+        assert set(self.plugins.keys()) == {"red", "green", "blue", "alpha"}
         return {}
