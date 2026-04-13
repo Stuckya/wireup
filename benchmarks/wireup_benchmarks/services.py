@@ -6,6 +6,7 @@ to avoid code duplication.
 """
 
 import os
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from threading import Lock
 from typing import AsyncIterator, Dict, Iterator, Optional, Tuple
@@ -52,7 +53,12 @@ def reset_counters() -> None:
         _COUNTERS.clear()
 
 
-def _expected_counts(requests_singleton: int, requests_scoped: int) -> Dict[str, int]:
+def _expected_counts(
+    requests_singleton: int,
+    requests_scoped: int,
+    requests_collection_set: int,
+    requests_collection_map: int,
+) -> Dict[str, int]:
     expected: Dict[str, int] = {}
     singleton_expected = 1 if requests_singleton > 0 else 0
     for name in ("Settings", "A", "B"):
@@ -65,6 +71,8 @@ def _expected_counts(requests_singleton: int, requests_scoped: int) -> Dict[str,
     expected["exit.I"] = requests_scoped
     expected["request.singleton"] = requests_singleton
     expected["request.scoped"] = requests_scoped
+    expected["request.collection_set"] = requests_collection_set
+    expected["request.collection_map"] = requests_collection_map
     return expected
 
 
@@ -76,7 +84,14 @@ def assert_workload(
     counters = get_counters()
     requests_singleton = counters.get("request.singleton", 0)
     requests_scoped = counters.get("request.scoped", 0)
-    expected = _expected_counts(requests_singleton, requests_scoped)
+    requests_collection_set = counters.get("request.collection_set", 0)
+    requests_collection_map = counters.get("request.collection_map", 0)
+    expected = _expected_counts(
+        requests_singleton,
+        requests_scoped,
+        requests_collection_set,
+        requests_collection_map,
+    )
     if overrides:
         expected.update(overrides)
     mismatches: Dict[str, int] = {}
@@ -218,3 +233,42 @@ async def make_i(e: E, f: F) -> AsyncIterator[I]:
         yield I(e, f)
     finally:
         record_exit("I")
+
+
+class Plugin(ABC):
+    """Interface for collection_set / collection_map benchmarks."""
+
+    @abstractmethod
+    def label(self) -> str: ...
+
+
+class PluginRed(Plugin):
+    def __init__(self) -> None:
+        record_created("PluginRed")
+
+    def label(self) -> str:
+        return "red"
+
+
+class PluginGreen(Plugin):
+    def __init__(self) -> None:
+        record_created("PluginGreen")
+
+    def label(self) -> str:
+        return "green"
+
+
+class PluginBlue(Plugin):
+    def __init__(self) -> None:
+        record_created("PluginBlue")
+
+    def label(self) -> str:
+        return "blue"
+
+
+class PluginAlpha(Plugin):
+    def __init__(self) -> None:
+        record_created("PluginAlpha")
+
+    def label(self) -> str:
+        return "alpha"
