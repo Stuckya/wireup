@@ -88,7 +88,7 @@ class BenchmarkModule(Module):
         return I(e, f)
 
     def configure(self, binder: Binder) -> None:
-        binder.multibind(List[Plugin], to=[PluginRed, PluginGreen, PluginBlue, PluginAlpha])
+        binder.multibind(List[Plugin], to=[PluginRed(), PluginGreen(), PluginBlue(), PluginAlpha()])
         binder.multibind(
             Dict[str, Plugin],
             to={
