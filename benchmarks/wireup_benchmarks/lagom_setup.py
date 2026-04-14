@@ -36,7 +36,7 @@ container[E] = E
 container[F] = F
 container[G] = G
 
-# Plugin singletons for collection_set / collection_map
+# Plugin singletons
 container[PluginRed] = Singleton(PluginRed)
 container[PluginGreen] = Singleton(PluginGreen)
 container[PluginBlue] = Singleton(PluginBlue)

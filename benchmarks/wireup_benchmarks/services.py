@@ -6,7 +6,6 @@ to avoid code duplication.
 """
 
 import os
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from threading import Lock
 from typing import AsyncIterator, Dict, Iterator, Optional, Tuple
@@ -235,48 +234,25 @@ async def make_i(e: E, f: F) -> AsyncIterator[I]:
         record_exit("I")
 
 
-class Plugin(ABC):
-    """Interface for collection_set / collection_map benchmarks."""
-
-    @abstractmethod
-    def label(self) -> str: ...
+class Plugin:
+    """Shared base for collection_set / collection_map benchmarks."""
 
 
 class PluginRed(Plugin):
-    """Plugin implementation keyed as "red"."""
-
     def __init__(self) -> None:
         record_created("PluginRed")
 
-    def label(self) -> str:
-        return "red"
-
 
 class PluginGreen(Plugin):
-    """Plugin implementation keyed as "green"."""
-
     def __init__(self) -> None:
         record_created("PluginGreen")
 
-    def label(self) -> str:
-        return "green"
-
 
 class PluginBlue(Plugin):
-    """Plugin implementation keyed as "blue"."""
-
     def __init__(self) -> None:
         record_created("PluginBlue")
 
-    def label(self) -> str:
-        return "blue"
-
 
 class PluginAlpha(Plugin):
-    """Plugin implementation keyed as "alpha"."""
-
     def __init__(self) -> None:
         record_created("PluginAlpha")
-
-    def label(self) -> str:
-        return "alpha"
